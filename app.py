@@ -84,3 +84,36 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/library')
+def library():
+    return render_template('library.html')
+
+
+@app.route('/api/render', methods=['POST'])
+def api_render():
+    data = request.get_json(silent=True) or {}
+    content = data.get('content', '')
+    if not isinstance(content, str):
+        return jsonify({'error': 'Invalid content'}), 400
+    html = render_markdown(content)
+    return jsonify({'html': html})
+
+
+@app.route('/api/documents', methods=['GET'])
+def api_list_documents():
+    q = request.args.get('q', '').lower().strip()
+    data = load_data()
+    docs = data.get('documents', [])
+    if q:
+        docs = [d for d in docs if q in d.get('title', '').lower() or q in d.get('content', '').lower()]
+    docs_sorted = sorted(docs, key=lambda d: d.get('updated_at', ''), reverse=True)
+    summary = [{
+        'id': d['id'],
+        'title': d.get('title', 'Untitled'),
+        'created_at': d.get('created_at'),
+        'updated_at': d.get('updated_at'),
+        'word_count': len(d.get('content', '').split()),
+        'char_count': len(d.get('content', '')),
+        'preview': d.get('content', '')[:120].replace('\n',' ')
+    } for d in docs_sorted]
+    return jsonify({'documents': summary, 'total': len(summary)})
