@@ -70,6 +70,40 @@
                 if (renderBadge) renderBadge.textContent = 'err';
             }
         }
+
+        function triggerPipeline() {
+            clearTimeout(renderTimer);
+            renderTimer = setTimeout(() => {
+                renderPreview(editor.value);
+                const text = editor.value;
+                const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+                if (wordCount) wordCount.textContent = `${words} word${words === 1 ? '' : 's'}`;
+                if (charCount) charCount.textContent = `${text.length} char${text.length === 1 ? '' : 's'}`;
+                localStorage.setItem(DRAFT_KEY, text);
+            }, 200);
+        }
+
+        function setTitle(title) {
+            currentTitle = title;
+            if (docTitleDisplay) docTitleDisplay.textContent = title;
+            document.title = `${title} - MarkVault`;
+            localStorage.setItem(DRAFT_TITLE_KEY, title);
+        }
+
+        editor.addEventListener('input', triggerPipeline);
+        editor.addEventListener('keyword', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                openModal();
+            }
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const s = editor.selectionStart;
+                editor.value = editor.value.slice(0, s) + '  ' + editor.value.slice(editor.selectionEnd);
+                editor.selectionStart = editor.selectionEnd = s + 2;
+            }
+        });
+
         
     }
 })
