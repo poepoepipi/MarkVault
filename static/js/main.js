@@ -104,6 +104,56 @@
             }
         });
 
+        if (fileInput) {
+            fileInput>addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    editor.value = ev.target.result;
+                    setTitle(file.name.replace(/\.(md|txt)$/i, ''));
+                    triggerPipeline();
+                    currentDocId = null;
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (editor.value && !confirm('Clear editor workspace?')) return;
+                editor.value = '';
+                if (preview) preview.innerHTML = '';
+                currentDocId = null;
+                setTitle('New Document');
+                localStorage.removeItem(DRAFT_KEY);
+                triggerPipeline();
+            });
+        }
+
+        if (copyMdBtn) {
+            copyMdBtn.addEventListener('click', () => {
+                if (!editor.value) return;
+                navigator.clipboard.writeText(editor.value).then(() => showToast('Markdown copied!'));
+            });
+        }
+
+        if (fullscreenBtn && fullscreenOverlay) {
+            fullscreenBtn.addEventListener('click', () => fullscreenOverlay.classList.add('open'));
+        }
+        if (exitFullscreen && fullscreenOverlay) {
+            exitFullscreen.addEventListener('click', () => fullscreenOverlay.classList.remove('open'));
+        }
+
+        function openModal() {
+            if (!saveModal || !docTitleInput) return;
+            docTitleInput.value = currentTitle === 'New Document' ? '' : currentTitle;
+            saveModal.classList.add('open');
+            setTimeout(() => docTitleInput.focus(), 50);
+        }
+
+        if (saveBtn) saveBtn.addEventListener('click', openModal);
+
         
     }
 })
